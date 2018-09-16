@@ -1,117 +1,66 @@
-# Lab notebook for CSE185 Final Project
+# Codebook for hw2 of bioinformatics 
 
-## Obtain the sequencing data
-```
-fastq-dump SRR5854183
-fastq-dump SRR5853383 
+### Part 2
 
-fastq-dump SRR5858561
-fastq-dump SRR5858469
+1) Using Bio.Entrez.efetch and SeqIO, download from GenBank, the mRNA sequences
+for the human genes HBA1(NM_000558)  and HBA2 (NM_000517) . Print the sequence
+ID, name, and description of these sequence records.
+#### Code 
+```
+from Bio import Entrez, SeqIO
+Entrez.email='cw3114@nyu.edu'
+temp =Entrez.efetch(db="nucleotide",rettype="gb",id="NM_000558") 
+out = open("NM_000558.fasta",'w') 
+gbseq1 =SeqIO.read(temp,"genbank")
+SeqIO.write(gbseq1,out,"fasta")
 
-fastq-dump SRR5853462
+temp =Entrez.efetch(db="nucleotide",rettype="gb",id="NM_000517") 
+out = open("NM_000517.fasta",'w') 
+gbseq2 =SeqIO.read(temp,"genbank")
+SeqIO.write(gbseq2,out,"fasta")
 
+temp.close()
+out.close()
+print(gbseq1)
+print(gbseq2)
 ```
-Note: this data is from emm genotype 1,2 and 11, since the data is large, we keep at most 3 out them at once 
+#### Result 
+```
+ID: NM_000558.5
+Name: NM_000558
+Description: Homo sapiens hemoglobin subunit alpha 1 (HBA1), mRNA
+...
 
-## Check the quality of the sequencing data and filter before trimming 
-```
-fastqc -o ./fastqc_result *.fastq 
-```
-## Filter the reads
-According to the fastqc report these files have reads with good quailty and do not need to be trimmed
-```
-sickle se -f SRR5854183.fastq -o trimmed_SRR5854183.fastq -t sanger
-sickle se -f SRR5853383.fastq -o trimmed_SRR5853383.fastq -t sanger
-sickle se -f SRR5858561.fastq -o trimmed_SRR5858561.fastq -t sanger
-sickle se -f SRR5858469.fastq -o trimmed_SRR5858469.fastq -t sanger
-sickle se -f SRR5853462.fastq -o trimmed_SRR5853462.fastq -t sanger
-```
-
-## Check the quality of the sequencing data and filter after trimming 
-```
-fastqc -o ./fastqc_result *.fastq 
-```
-## Align the sequencing data respectively to the emm_Gene reference 
-```
-bwa mem GAS_Reference_DB/emm_Gene-DB_Final.fasta trimmed_SRR5854183.fastq  | samtools view -S -b | samtools sort > 4183.bam
-samtools index 4183.bam
-samtools mpileup -f GAS_Reference_DB/emm_Gene-DB_Final.fasta 4183.bam > 4183.mpileup
-
-java -jar /home/linux/ieng6/cs185s/public/tools/VarScan.jar mpileup2snp \
-    4183.mpileup \
-    --min-var-freq 0.95 \
-    --variants --output-vcf 1 > vcf_result/4183.vcf
-```
-5 SNP mutatons detected 
-```
-bwa mem GAS_Reference_DB/emm_Gene-DB_Final.fasta trimmed_SRR5853383.fastq  | samtools view -S -b | samtools sort > 3383.bam
-samtools index 3383.bam
-samtools mpileup -f GAS_Reference_DB/emm_Gene-DB_Final.fasta 3383.bam > 3383.mpileup
-
-java -jar /home/linux/ieng6/cs185s/public/tools/VarScan.jar mpileup2snp \
-    3383.mpileup \
-    --min-var-freq 0.95 \
-    --variants --output-vcf 1 > vcf_result/3383.vcf
-```
-5 SNP mutatons detected 
-```
-bwa mem GAS_Reference_DB/emm_Gene-DB_Final.fasta trimmed_SRR5858561.fastq  | samtools view -S -b | samtools sort > 8561.bam
-samtools index 8561.bam
-samtools mpileup -f GAS_Reference_DB/emm_Gene-DB_Final.fasta 8561.bam > 8561.mpileup
-
-java -jar /home/linux/ieng6/cs185s/public/tools/VarScan.jar mpileup2snp \
-    8561.mpileup \
-    --min-var-freq 0.95 \
-    --variants --output-vcf 1 > vcf_result/8561.vcf
-```
-9 SNP mutatons detected 
-```
-bwa mem GAS_Reference_DB/emm_Gene-DB_Final.fasta trimmed_SRR5858469.fastq  | samtools view -S -b | samtools sort > 8469.bam
-samtools index 8469.bam
-samtools mpileup -f GAS_Reference_DB/emm_Gene-DB_Final.fasta 8469.bam > 8469.mpileup
-
-java -jar /home/linux/ieng6/cs185s/public/tools/VarScan.jar mpileup2snp \
-    8469.mpileup \
-    --min-var-freq 0.95 \
-    --variants --output-vcf 1 > vcf_result/8469.vcf
-```
-7 SNP mutatons detected 
-```
-bwa mem GAS_Reference_DB/emm_Gene-DB_Final.fasta trimmed_SRR5853462.fastq  | samtools view -S -b | samtools sort > 3462.bam
-samtools index 3462.bam
-samtools mpileup -f GAS_Reference_DB/emm_Gene-DB_Final.fasta 3462.bam > 3462.mpileup
-
-java -jar /home/linux/ieng6/cs185s/public/tools/VarScan.jar mpileup2snp \
-    3462.mpileup \
-    --min-var-freq 0.95 \
-    --variants --output-vcf 1 > vcf_result/3462.vcf
-```
-11 SNP mutatons detected 
-
-## Install vcr tools
-```
-git clone https://github.com/vcftools/vcftools.git
-cd vcftools
-./autogen.sh
-./configure
-make
-make install
-```
-
-Command fails, no sudo permmsion 
-try install SnpSift instead
-```
-wget http://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip
-unzip snpEff_latest_core.zip
-```
-
-## Run comparison
-```
-java -jar ~/snpEff/SnpSift.jar concordance -v ~/final/vcf_result/3383.vcf ~/final/vcf_result/4183.vcf > 3383_4183.txt
-java -jar ~/snpEff/SnpSift.jar concordance -v ~/final/vcf_result/8469.vcf ~/final/vcf_result/8561.vcf > 8469_8561.txt
-java -jar ~/snpEff/SnpSift.jar concordance -v ~/final/vcf_result/3383.vcf ~/final/vcf_result/8561.vcf > 3383_8561.txt
-java -jar ~/snpEff/SnpSift.jar concordance -v ~/final/vcf_result/3383.vcf ~/final/vcf_result/3462.vcf > 3383_3462.txt
-
-java -jar ~/snpEff/SnpSift.jar concordance -v ~/final/vcf_result/3383.vcf ~/final/vcf_result/8561.vcf ~/final/vcf_result/4183.vcf ~/final/vcf_result/8469.vcf ~/final/vcf_result/3462.vcf > overall.txt
+ID: NM_000517.6
+Name: NM_000517
+Description: Homo sapiens hemoglobin subunit alpha 2 (HBA2), mRNA
+...
 
 ```
+
+2)
+Read the sequence records from a list of GenBank IDs in a text file (seq_id.list) into a
+Python list, and import them using
+Bio.Entrez.efetch
+into a Python list of SeqRecords.
+Print the sequence name and the length of each of these sequences.
+3)
+Import a large set of sequences from a Fasta file: ecogene.fasta
+a.
+How many sequences are in this file?
+b.
+Using Biopython, read the sequence ID, name, and description for the first
+Sequence Record. What do you get? Compare to the metadata available for the
+GenBank records above.
+c.
+What is the total length of all of the sequences in the file (just the DNA, not
+headers)
+d.
+Make a new FASTA file with just the sequences >= 300 bp in length
+i.
+Show the Python code that you used
+e.
+Make a new FASTA file with just the sequences with %GC > 60
+i.
+Show the Python code that you used
+
