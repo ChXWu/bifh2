@@ -1,4 +1,5 @@
 # HW2 for bioinformatics 
+### Changxuan Wu, 9/16/2018
 
 Biopython part is finished with jupyter notebook
 
